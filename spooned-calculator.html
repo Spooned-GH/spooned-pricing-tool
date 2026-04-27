@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>spooned — Event Pricing Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#C15B84;--deep:#99225e;--black:#0d0d0d;--white:#ffffff;--cream:#faf8f6;--light-pink:#fbeaf2;--border:#e8dde3;--gray:#6b6b6b;--light-gray:#f4f4f4;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--black);font-size:14px;line-height:1.6;min-height:100vh;}
+.header{background:var(--black);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(193,91,132,0.3);}
+.logo{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:var(--white);letter-spacing:-0.5px;}
+.logo .sym{color:var(--pink);font-size:26px;margin:0 1px;}
+.header-tag{font-size:11px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.4);}
+.main{display:grid;grid-template-columns:1fr 340px;min-height:calc(100vh - 60px);}
+.form-col{padding:32px 32px 80px 40px;}
+.results-col{background:var(--black);padding:28px 28px 60px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;border-left:1px solid rgba(193,91,132,0.2);}
+.section-label{font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--pink);margin-bottom:6px;}
+.section-title{font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;margin-bottom:20px;color:var(--black);}
+.form-section{background:var(--white);border-radius:14px;padding:24px 28px;margin-bottom:20px;border:1px solid var(--border);}
+.mode-toggle{display:flex;background:var(--light-gray);border-radius:10px;padding:4px;gap:4px;}
+.mode-btn{flex:1;padding:9px 8px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--gray);transition:all 0.2s;text-align:center;line-height:1.3;}
+.mode-btn.active{background:var(--white);color:var(--black);box-shadow:0 1px 4px rgba(0,0,0,0.12);font-weight:700;}
+.mode-btn small{display:block;font-size:10px;opacity:0.6;margin-top:1px;}
+.tier-row{display:flex;gap:10px;margin-bottom:4px;}
+.tier-pill{flex:1;padding:10px 8px;border:1.5px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--white);}
+.tier-pill.active{border-color:var(--pink);background:var(--light-pink);}
+.tier-pill .tier-name{font-weight:700;font-size:13px;color:var(--black);margin-bottom:2px;}
+.tier-pill.active .tier-name{color:var(--deep);}
+.tier-pill .tier-range{font-size:11px;color:var(--gray);}
+.tier-pill.active .tier-range{color:var(--pink);}
+.field-group{margin-bottom:16px;}
+.field-group:last-child{margin-bottom:0;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+label{display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;letter-spacing:0.03em;text-transform:uppercase;}
+.chf-group{display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color 0.2s;}
+.chf-group:focus-within{border-color:var(--pink);box-shadow:0 0 0 3px rgba(193,91,132,0.1);}
+.chf-badge{background:var(--light-gray);color:var(--gray);font-size:12px;font-weight:600;padding:0 12px;display:flex;align-items:center;border-right:1.5px solid var(--border);white-space:nowrap;flex-shrink:0;user-select:none;}
+.chf-group input{flex:1;border:none!important;border-radius:0!important;box-shadow:none!important;outline:none;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--black);background:var(--white);min-width:0;}
+input[type="text"],input[type="number"],input[type="date"],select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--black);background:var(--white);transition:border-color 0.2s;outline:none;-webkit-appearance:none;}
+input:focus,select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(193,91,132,0.1);}
+.readonly-group{display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;background:var(--light-gray);}
+.readonly-group .chf-badge{background:#ececec;}
+.readonly-group input{background:var(--light-gray)!important;color:var(--gray)!important;cursor:default;}
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;background:var(--light-gray);border-radius:8px;}
+.toggle-label{font-size:13px;color:var(--gray);flex:1;}
+.toggle{position:relative;width:38px;height:22px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#ccc;border-radius:22px;cursor:pointer;transition:0.2s;}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;left:3px;top:3px;transition:0.2s;}
+.toggle input:checked+.toggle-slider{background:var(--pink);}
+.toggle input:checked+.toggle-slider:before{transform:translateX(16px);}
+.hint{font-size:11.5px;color:var(--gray);margin-top:5px;line-height:1.4;}
+.cost-subsection{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--pink);margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--light-pink);}
+.hidden{display:none!important;}
+.results-title{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--pink);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid rgba(193,91,132,0.2);}
+.result-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+.result-card.highlight{background:rgba(193,91,132,0.12);border-color:rgba(193,91,132,0.3);}
+.result-label{font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:4px;}
+.result-value{font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;color:var(--white);}
+.result-value.pink{color:var(--pink);}
+.result-value.success{color:#4ade80;}
+.result-value.danger{color:#f87171;}
+.result-value.warn{color:#fbbf24;}
+.result-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-top:3px;}
+.result-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;}
+.result-row:last-child{border-bottom:none;}
+.result-row-label{color:rgba(255,255,255,0.5);}
+.result-row-value{color:var(--white);font-weight:600;}
+.result-divider{border:none;border-top:1px solid rgba(255,255,255,0.08);margin:14px 0;}
+.alerts{margin-bottom:12px;}
+.alert{display:flex;gap:8px;align-items:flex-start;padding:10px 14px;border-radius:8px;margin-bottom:8px;font-size:12px;line-height:1.5;}
+.alert:last-child{margin-bottom:0;}
+.alert-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.alert.danger{background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);}
+.alert.danger .alert-dot{background:#f87171;}
+.alert.warn{background:rgba(251,191,36,0.12);color:#fcd34d;border:1px solid rgba(251,191,36,0.2);}
+.alert.warn .alert-dot{background:#fbbf24;}
+.alert.success{background:rgba(74,222,128,0.1);color:#86efac;border:1px solid rgba(74,222,128,0.15);}
+.alert.success .alert-dot{background:#4ade80;}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;}
+.status-badge.go{background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.3);}
+.status-badge.warn{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);}
+.status-badge.stop{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);}
+.markup-hint{padding:10px 14px;background:rgba(193,91,132,0.1);border:1px solid rgba(193,91,132,0.25);border-radius:8px;margin-bottom:10px;font-size:11.5px;color:rgba(255,255,255,0.6);line-height:1.5;}
+.markup-hint strong{color:var(--pink);}
+.breakdown-header{font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:8px;margin-top:4px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.export-btn{width:100%;padding:13px;background:var(--pink);color:var(--white);border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:background 0.2s;margin-top:16px;}
+.export-btn:hover{background:var(--deep);}
+.export-area{margin-top:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:rgba(255,255,255,0.7);white-space:pre-wrap;word-break:break-word;max-height:180px;overflow-y:auto;line-height:1.6;}
+.copy-btn{width:100%;margin-top:8px;padding:9px;background:transparent;color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.copy-btn:hover{background:rgba(255,255,255,0.08);color:white;}
+@media(max-width:900px){.main{grid-template-columns:1fr;}.results-col{position:static;height:auto;}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo">sp<span class="sym">∞</span>ned</div>
+  <div class="header-tag">Event Pricing Calculator · Internal Tool</div>
+</header>
+<div class="main">
+<div class="form-col">
+
+  <div class="form-section">
+    <div class="section-label">01 — Event Details</div>
+    <div class="section-title">About this event</div>
+    <div class="field-group">
+      <label>Event Name</label>
+      <input type="text" id="eventName" placeholder="e.g. VBZ Tram Night · Zürich" oninput="calc()">
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Event Date</label>
+        <input type="date" id="eventDate" oninput="calc()">
+      </div>
+      <div class="field-group">
+        <label>VAT Registered?</label>
+        <select id="vatReg" onchange="calc()">
+          <option value="no">No — not yet registered</option>
+          <option value="yes">Yes — VAT registered</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Tier</label>
+      <div class="tier-row">
+        <div class="tier-pill active" id="pill-Spark" onclick="setTier('Spark')">
+          <div class="tier-name">⚡ Spark</div>
+          <div class="tier-range">CHF 50–90 · 12–20 pax</div>
+        </div>
+        <div class="tier-pill" id="pill-Flame" onclick="setTier('Flame')">
+          <div class="tier-name">🔥 Flame</div>
+          <div class="tier-range">CHF 90–160 · 10–16 pax</div>
+        </div>
+        <div class="tier-pill" id="pill-Ember" onclick="setTier('Ember')">
+          <div class="tier-name">✦ Ember</div>
+          <div class="tier-range">CHF 160–300 · 8–12 pax</div>
+        </div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Event Mode</label>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-ext" onclick="setMode('ext')">External EO<small>EO runs everything</small></button>
+        <button class="mode-btn" id="btn-hybrid" onclick="setMode('hybrid')">Hybrid<small>Fixed venue + we organise</small></button>
+        <button class="mode-btn" id="btn-self" onclick="setMode('self')">Spooned Event<small>We organise everything</small></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXTERNAL EO -->
+  <div class="form-section" id="ext-section">
+    <div class="section-label">02 — Costs</div>
+    <div class="section-title">External EO costs</div>
+    <div class="toggle-row">
+      <span class="toggle-label">EO charges a flat rate for the whole event</span>
+      <label class="toggle"><input type="checkbox" id="flatRateToggle" onchange="toggleFlatRate();calc()"><span class="toggle-slider"></span></label>
+    </div>
+    <div id="perPersonFields">
+      <div class="field-group">
+        <label>EO Cost per Person</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="eoCostPP" placeholder="0.00" min="0" step="0.5" oninput="calc()"></div>
+        <div class="hint">Amount on the EO invoice per participant</div>
+      </div>
+    </div>
+    <div id="flatRateFields" class="hidden">
+      <div class="field-group">
+        <label>EO Flat Rate (whole event)</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="eoCostFlat" placeholder="0.00" min="0" step="10" oninput="calc()"></div>
+        <div class="hint">Total on the EO invoice for the whole event</div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>EO Min Participants</label>
+        <input type="number" id="eoMin" placeholder="e.g. 10" min="1" oninput="calc()">
+      </div>
+      <div class="field-group">
+        <label>EO Max Participants</label>
+        <input type="number" id="eoMax" placeholder="e.g. 20" min="1" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- HYBRID -->
+  <div class="form-section hidden" id="hybrid-section">
+    <div class="section-label">02 — Costs</div>
+    <div class="section-title">Hybrid event costs</div>
+    <div class="hint" style="margin-bottom:16px;color:var(--deep);font-weight:500;">A partner provides the venue or tram (fixed cost). Spooned organises everything else on top.</div>
+    <div class="cost-subsection">Fixed external cost (venue / partner)</div>
+    <div class="field-group">
+      <label>Venue / Partner Flat Fee</label>
+      <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="hybridVenue" placeholder="0.00" min="0" step="10" oninput="calc()"></div>
+      <div class="hint">e.g. VBZ tram rental, private room hire, partner space</div>
+    </div>
+    <div class="cost-subsection">Spooned-organised costs (on top)</div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Drinks (open bar)</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="hybridDrinks" placeholder="0" min="0" oninput="calc()"></div>
+      </div>
+      <div class="field-group">
+        <label>Food</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="hybridFood" placeholder="0" min="0" oninput="calc()"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Activity</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="hybridActivity" placeholder="0" min="0" oninput="calc()"></div>
+      </div>
+      <div class="field-group">
+        <label>Material</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="hybridMaterial" placeholder="0" min="0" oninput="calc()"></div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Personnel</label>
+      <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="hybridPersonnel" placeholder="0" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row" style="margin-top:4px;">
+      <div class="field-group">
+        <label>Min Participants</label>
+        <input type="number" id="hybridMin" placeholder="e.g. 10" min="1" oninput="calc()">
+      </div>
+      <div class="field-group">
+        <label>Max Participants</label>
+        <input type="number" id="hybridMax" placeholder="e.g. 20" min="1" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- SELF ORGANISED -->
+  <div class="form-section hidden" id="self-section">
+    <div class="section-label">02 — Costs</div>
+    <div class="section-title">Spooned event costs</div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Drinks (open bar)</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="costDrinks" placeholder="0" min="0" oninput="calc()"></div>
+      </div>
+      <div class="field-group">
+        <label>Food</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="costFood" placeholder="0" min="0" oninput="calc()"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Activity</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="costActivity" placeholder="0" min="0" oninput="calc()"></div>
+      </div>
+      <div class="field-group">
+        <label>Material</label>
+        <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="costMaterial" placeholder="0" min="0" oninput="calc()"></div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Personnel</label>
+      <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="costPersonnel" placeholder="0" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row" style="margin-top:4px;">
+      <div class="field-group">
+        <label>Min Participants</label>
+        <input type="number" id="selfMin" placeholder="e.g. 10" min="1" oninput="calc()">
+      </div>
+      <div class="field-group">
+        <label>Max Participants</label>
+        <input type="number" id="selfMax" placeholder="e.g. 20" min="1" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- PRICING -->
+  <div class="form-section">
+    <div class="section-label">03 — Pricing &amp; Participants</div>
+    <div class="section-title">Revenue &amp; registrations</div>
+    <div class="field-group">
+      <label>Marketing Cost (Spooned's share)</label>
+      <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="costMarketing" placeholder="0" min="0" oninput="calc()"></div>
+      <div class="hint">Ads, design, newsletter — your net cost only</div>
+    </div>
+    <div class="field-group">
+      <label>Price charged to attendees</label>
+      <div class="chf-group"><div class="chf-badge">CHF</div><input type="number" id="basePrice" placeholder="0.00" min="0" step="0.5" oninput="calc()"></div>
+      <div class="hint">This is the price you set. It's what Spooned receives per person. The 2.9% Stripe fee is added on top — your attendee sees the amount below.</div>
+    </div>
+    <div class="field-group">
+      <label>Attendee sees &amp; pays (auto — incl. 2.9% Stripe fee)</label>
+      <div class="readonly-group chf-group"><div class="chf-badge">CHF</div><input type="text" id="clientPrice" readonly placeholder="—"></div>
+      <div class="hint">This is what appears on your payment page. Spooned keeps the price above; Stripe takes the 2.9% difference.</div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Expected Registrations</label>
+        <input type="number" id="regExpected" placeholder="0" min="0" oninput="calc()">
+        <div class="hint">Planning estimate</div>
+      </div>
+      <div class="field-group">
+        <label>Confirmed Registrations</label>
+        <input type="number" id="regConfirmed" placeholder="0" min="0" oninput="calc()">
+        <div class="hint">Live number</div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>No-show / dropout buffer</label>
+      <div class="chf-group"><div class="chf-badge">%</div><input type="number" id="noshow" placeholder="10" min="0" max="50" value="10" oninput="calc()"></div>
+      <div class="hint">Pessimistic adjustment — typically 10–15% for dating events</div>
+    </div>
+  </div>
+
+</div>
+<div class="results-col">
+  <div class="results-title">Live Financial Summary</div>
+  <div id="statusBadge" class="status-badge warn"><span>●</span><span id="statusText">Enter event details</span></div>
+  <div class="alerts" id="alertsBox"></div>
+  <div class="markup-hint" id="markupHint" style="display:none"></div>
+  <div class="result-card highlight">
+    <div class="result-label">Margin per Person</div>
+    <div class="result-value" id="r_marginPP">—</div>
+    <div class="result-sub">Floor: minimum CHF 25.00</div>
+  </div>
+  <div class="grid-2" style="gap:10px;margin-bottom:10px;">
+    <div class="result-card">
+      <div class="result-label">Total Margin</div>
+      <div class="result-value" id="r_totalMargin" style="font-size:18px">—</div>
+    </div>
+    <div class="result-card">
+      <div class="result-label">Margin %</div>
+      <div class="result-value" id="r_marginPct" style="font-size:18px">—</div>
+    </div>
+  </div>
+  <div class="result-card">
+    <div class="result-label">Break-even Participants</div>
+    <div class="result-value" id="r_breakeven" style="font-size:18px">—</div>
+    <div class="result-sub" id="r_breakevenSub"></div>
+  </div>
+  <hr class="result-divider">
+  <div class="breakdown-header">Cost breakdown</div>
+  <div class="result-card">
+    <div class="result-row"><span class="result-row-label">Total cost</span><span class="result-row-value" id="r_totalCost">—</span></div>
+    <div class="result-row"><span class="result-row-label">Cost per person</span><span class="result-row-value" id="r_costPP">—</span></div>
+    <div class="result-row"><span class="result-row-label">Marketing</span><span class="result-row-value" id="r_marketing">—</span></div>
+  </div>
+  <div class="breakdown-header" style="margin-top:10px;">Revenue breakdown</div>
+  <div class="result-card">
+    <div class="result-row"><span class="result-row-label">Spooned receives / person</span><span class="result-row-value" id="r_basePrice">—</span></div>
+    <div class="result-row"><span class="result-row-label">Attendee pays / person</span><span class="result-row-value" id="r_clientPrice">—</span></div>
+    <div class="result-row"><span class="result-row-label">Confirmed registrations</span><span class="result-row-value" id="r_confirmed">—</span></div>
+    <div class="result-row"><span class="result-row-label">Effective (after no-show)</span><span class="result-row-value" id="r_effective">—</span></div>
+    <div class="result-row"><span class="result-row-label">Gross revenue</span><span class="result-row-value" id="r_revenue">—</span></div>
+  </div>
+  <hr class="result-divider">
+  <button class="export-btn" onclick="generateExport()">Export Summary</button>
+  <div id="exportBox" style="display:none;">
+    <div class="export-area" id="exportText"></div>
+    <button class="copy-btn" onclick="copyExport()">Copy to clipboard</button>
+  </div>
+</div>
+</div>
+<script>
+let currentMode='ext',currentTier='Spark';
+const TIERS={Spark:{minPrice:50,maxPrice:90,minPax:12,maxPax:20},Flame:{minPrice:90,maxPrice:160,minPax:10,maxPax:16},Ember:{minPrice:160,maxPrice:300,minPax:8,maxPax:12}};
+function setTier(t){currentTier=t;['Spark','Flame','Ember'].forEach(x=>{document.getElementById('pill-'+x).className='tier-pill'+(x===t?' active':'');});calc();}
+function setMode(m){currentMode=m;['ext','hybrid','self'].forEach(x=>{document.getElementById('btn-'+x).className='mode-btn'+(x===m?' active':'');document.getElementById(x+'-section').className='form-section'+(x===m?'':' hidden');});calc();}
+function toggleFlatRate(){const on=document.getElementById('flatRateToggle').checked;document.getElementById('perPersonFields').className=on?'hidden':'';document.getElementById('flatRateFields').className=on?'':'hidden';}
+function n(id){const el=document.getElementById(id);if(!el)return 0;const v=parseFloat(el.value);return isNaN(v)?0:v;}
+function chf(v){if(v===null||isNaN(v))return'—';return'CHF '+v.toLocaleString('de-CH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function pct(v){if(isNaN(v)||!isFinite(v))return'—';return v.toFixed(1)+'%';}
+function getMarkupRange(c){if(c<=0)return null;if(c<60)return{lo:40,hi:50,label:'Under CHF 60: +40–50%'};if(c<120)return{lo:35,hi:45,label:'CHF 60–120: +35–45%'};if(c<200)return{lo:25,hi:35,label:'CHF 120–200: +25–35%'};return{lo:20,hi:25,label:'CHF 200+: +20–25%'};}
+function va(v){return document.getElementById('vatReg').value==='yes'?v/1.038:v;}
+function calc(){
+  const basePrice=n('basePrice');
+  const clientPrice=basePrice>0?basePrice*1.029:0;
+  document.getElementById('clientPrice').value=basePrice>0?clientPrice.toFixed(2):'';
+  const confirmed=n('regConfirmed'),expected=n('regExpected'),nsp=n('noshow')/100;
+  const effective=Math.floor(confirmed*(1-nsp));
+  const useReg=effective>0?effective:(confirmed>0?confirmed:expected);
+  const marketing=n('costMarketing');
+  let totalBaseCost=0,minPart=0,maxPart=0,rawCostPP=0;
+  if(currentMode==='ext'){
+    const flatOn=document.getElementById('flatRateToggle').checked;
+    if(flatOn){totalBaseCost=va(n('eoCostFlat'));}
+    else{const cpp=va(n('eoCostPP'));rawCostPP=cpp;totalBaseCost=cpp*Math.max(useReg,1);}
+    minPart=n('eoMin');maxPart=n('eoMax');
+  }else if(currentMode==='hybrid'){
+    const venue=va(n('hybridVenue'));
+    const ops=va(n('hybridDrinks'))+va(n('hybridFood'))+va(n('hybridActivity'))+va(n('hybridMaterial'))+va(n('hybridPersonnel'));
+    totalBaseCost=venue+ops;minPart=n('hybridMin');maxPart=n('hybridMax');
+  }else{
+    totalBaseCost=va(n('costDrinks'))+va(n('costFood'))+va(n('costActivity'))+va(n('costMaterial'))+va(n('costPersonnel'));
+    minPart=n('selfMin');maxPart=n('selfMax');
+  }
+  const totalCost=totalBaseCost+marketing;
+  const paxDen=Math.max(useReg,1);
+  const costPP=totalCost/paxDen;
+  if(rawCostPP===0&&totalBaseCost>0)rawCostPP=totalBaseCost/paxDen;
+  const revenue=basePrice*(useReg>0?useReg:0);
+  const totalMargin=revenue-totalCost;
+  const marginPP=useReg>0?totalMargin/useReg:0;
+  const marginPctV=revenue>0?(totalMargin/revenue)*100:0;
+  const breakeven=basePrice>0?Math.ceil(totalCost/basePrice):0;
+  const markupRange=getMarkupRange(rawCostPP);
+  const actualMarkup=rawCostPP>0?((basePrice-rawCostPP)/rawCostPP)*100:0;
+  const tier=TIERS[currentTier];
+  const alerts=[];
+  if(basePrice>0&&useReg>0&&marginPP<25)alerts.push({level:'danger',msg:`Margin per person is CHF ${marginPP.toFixed(2)} — below the CHF 25 minimum floor. This event must not proceed as priced.`});
+  if(confirmed>0&&minPart>0&&confirmed<minPart)alerts.push({level:'danger',msg:`Confirmed registrations (${confirmed}) are below the EO minimum (${minPart}). Event is at risk of cancellation.`});
+  if(basePrice>0&&(basePrice<tier.minPrice||basePrice>tier.maxPrice))alerts.push({level:'warn',msg:`Price CHF ${basePrice.toFixed(2)} is outside the ${currentTier} tier range (CHF ${tier.minPrice}–${tier.maxPrice}).`});
+  if(markupRange&&actualMarkup>0&&actualMarkup<markupRange.lo-5)alerts.push({level:'warn',msg:`Markup of ${actualMarkup.toFixed(1)}% is below the recommended range (${markupRange.label}).`});
+  if(useReg>0&&breakeven>0&&useReg<breakeven)alerts.push({level:'warn',msg:`Effective registrations (${useReg}) are below break-even (${breakeven} needed).`});
+  if(confirmed>0&&maxPart>0&&confirmed>maxPart)alerts.push({level:'warn',msg:`Confirmed (${confirmed}) exceed maximum capacity (${maxPart}).`});
+  if(alerts.length===0&&basePrice>0&&useReg>0&&marginPP>=25)alerts.push({level:'success',msg:`All checks passed. Margin CHF ${marginPP.toFixed(2)}/person — above the CHF 25 floor.`});
+  document.getElementById('alertsBox').innerHTML=alerts.map(a=>`<div class="alert ${a.level}"><div class="alert-dot"></div><div>${a.msg}</div></div>`).join('');
+  const badge=document.getElementById('statusBadge'),stxt=document.getElementById('statusText');
+  const hasDanger=alerts.some(a=>a.level==='danger'),hasWarn=alerts.some(a=>a.level==='warn');
+  if(!basePrice||!useReg){badge.className='status-badge warn';stxt.textContent='Awaiting input';}
+  else if(hasDanger){badge.className='status-badge stop';stxt.textContent='Not viable — action required';}
+  else if(hasWarn){badge.className='status-badge warn';stxt.textContent='Caution — review warnings';}
+  else{badge.className='status-badge go';stxt.textContent='Event viable — good to go';}
+  const mh=document.getElementById('markupHint');
+  if(markupRange&&basePrice>0&&rawCostPP>0){
+    const rLo=(rawCostPP*(1+markupRange.lo/100)).toFixed(0),rHi=(rawCostPP*(1+markupRange.hi/100)).toFixed(0);
+    mh.style.display='block';
+    mh.innerHTML=`<strong>Markup guide — ${markupRange.label}</strong><br>Recommended price: CHF ${rLo}–${rHi} &nbsp;|&nbsp; Your price: CHF ${basePrice.toFixed(2)} (${actualMarkup.toFixed(1)}% markup)`;
+  }else{mh.style.display='none';}
+  const colorM=marginPP<25?'danger':marginPP<40?'warn':'success';
+  const rMP=document.getElementById('r_marginPP');rMP.className='result-value '+colorM;rMP.textContent=useReg>0&&basePrice>0?chf(marginPP):'—';
+  const rTM=document.getElementById('r_totalMargin');rTM.textContent=useReg>0&&basePrice>0?chf(totalMargin):'—';rTM.className='result-value '+(totalMargin<0?'danger':'pink');
+  document.getElementById('r_marginPct').textContent=useReg>0&&basePrice>0?pct(marginPctV):'—';
+  document.getElementById('r_breakeven').textContent=basePrice>0?breakeven+' people':'—';
+  const beSub=document.getElementById('r_breakevenSub');
+  if(breakeven>0&&minPart>0){beSub.textContent=breakeven<=minPart?'Covered within minimum':`${breakeven-minPart} above minimum`;}else{beSub.textContent='';}
+  document.getElementById('r_totalCost').textContent=totalCost>0?chf(totalCost):'—';
+  document.getElementById('r_costPP').textContent=costPP>0?chf(costPP):'—';
+  document.getElementById('r_marketing').textContent=marketing>0?chf(marketing):'CHF 0.00';
+  document.getElementById('r_basePrice').textContent=basePrice>0?chf(basePrice):'—';
+  document.getElementById('r_clientPrice').textContent=clientPrice>0?chf(clientPrice):'—';
+  document.getElementById('r_confirmed').textContent=confirmed>0?confirmed+' pax':'—';
+  document.getElementById('r_effective').textContent=confirmed>0?effective+' pax (–'+(n('noshow')||10)+'%)':'—';
+  document.getElementById('r_revenue').textContent=revenue>0?chf(revenue):'—';
+  const modeLabels={ext:'External EO',hybrid:'Hybrid',self:'Spooned Event'};
+  window._last={basePrice,clientPrice,totalCost,costPP,revenue,totalMargin,marginPP,marginPctV,breakeven,effective,confirmed,marketing,markupRange,actualMarkup,modeLabel:modeLabels[currentMode]};
+}
+function generateExport(){
+  const d=window._last||{};
+  const name=document.getElementById('eventName').value||'(unnamed)';
+  const date=document.getElementById('eventDate').value||'—';
+  const vatSt=document.getElementById('vatReg').value==='yes'?'VAT-registered':'Not VAT-registered';
+  const lines=[
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '   spooned — Event Pricing Summary',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '',`Event:            ${name}`,`Date:             ${date}`,`Tier:             ${currentTier}`,`Mode:             ${d.modeLabel||'—'}`,`VAT status:       ${vatSt}`,
+    '','── COSTS ───────────────────────────',`Total costs:      ${chf(d.totalCost||0)}`,`Cost per person:  ${chf(d.costPP||0)}`,`Marketing:        ${chf(d.marketing||0)}`,
+    '','── PRICING ─────────────────────────',`Spooned receives: ${chf(d.basePrice||0)}   (per person)`,`Attendee pays:    ${chf(d.clientPrice||0)}  (incl. 2.9% Stripe)`,
+    '','── PARTICIPANTS ─────────────────────',`Confirmed:        ${document.getElementById('regConfirmed').value||'—'} pax`,`Expected:         ${document.getElementById('regExpected').value||'—'} pax`,`No-show buffer:   ${n('noshow')}%`,`Effective:        ${d.effective||'—'} pax`,`Break-even:       ${d.breakeven||'—'} pax`,
+    '','── RESULTS ──────────────────────────',`Gross revenue:    ${chf(d.revenue||0)}`,`Total margin:     ${chf(d.totalMargin||0)}`,`Margin/person:    ${chf(d.marginPP||0)}   (minimum CHF 25.00)`,`Margin %:         ${pct(d.marginPctV||0)}`,
+    d.markupRange?`Markup guide:     ${d.markupRange.label}`:'',
+    d.actualMarkup>0?`Applied markup:   ${(d.actualMarkup).toFixed(1)}%`:'',
+    '','━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',`Generated: ${new Date().toLocaleDateString('de-CH')} · spooned internal tool`,'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  ].filter(Boolean).join('\n');
+  document.getElementById('exportText').textContent=lines;
+  document.getElementById('exportBox').style.display='block';
+}
+function copyExport(){
+  navigator.clipboard.writeText(document.getElementById('exportText').textContent).then(()=>{
+    const btn=document.querySelector('.copy-btn');btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy to clipboard',2000);
+  });
+}
+calc();
+</script>
+</body>
+</html>
